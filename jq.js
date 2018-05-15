@@ -9,7 +9,24 @@ var $ = function(selector){
     return new $.prototype.init(selector)
 }
 $.prototype={
+    length:0,
+    constructor: $,
     init:function(selector,parent){
+        //不存在selector
+        if(!selector){
+            return this;
+        }
+        //是对象时候相当于触发domLoad
+        if(this.isFunction(selector)){
+            this.ready(selector)
+            return;
+        }
+        //原生元素处理
+        if( selector.nodeType ){
+            this[ 0 ] = selector;
+			this.length = 1;
+			return this;
+        }
         var parentNodes = parent || [document];
         var ele = selector.split(" ")
         
@@ -69,6 +86,9 @@ $.prototype={
     isArray:function (value){
         return Object.prototype.toString.call(value)==='[object Array]'; 
     },
+    isFunction(value){
+        return Object.prototype.toString.call(value)==='[object Function]';
+    },
     /**
      * 
      * @param {*} obj1 
@@ -112,29 +132,27 @@ $.prototype={
         }
     },
     /**
-     * 获取元素的属性
+     * 3种情况
+     * 1.css('width','200px')                     设置一个
+     * 2.css({'width':'200px','height':'300px'})  设置一群
+     * 3.css('width')                             获取
      */
-    getStyle:function (element, property){
-        var proValue = null;
-        if (!document.defaultView) {
-            proValue = element.currentStyle[property];
-        } else {
-            proValue = document.defaultView.getComputedStyle(element)[property];
-        }
-        return proValue;
+    css:function(key,value){
+        return $.access(this, key, value, function(elem,key,value){
+            //value存在就设置属性，不存在就获取属性
+            return value ? $.setStyle(elem,key,value) : $.getStyle(elem,key)
+        })
     },
     /**
-     * json={
-     *    color:'red'
-     * }
+     * 3种情况
+     * 1.attr('data-id','name')                      设置一个
+     * 2.attr({'data-key':'0000','data-id':'name'})  设置一群
+     * 3.attr('data-id')                               获取
      */
-    css:function(json){
-        for(var i in json){
-            this.each(function(item){
-                item.style[i] = json[i]
-            })
-        }
-        return this;
+    attr(key,value){
+        return $.access(this, key, value, function(elem,key,value) {
+            return value ? $.setAttr(elem,key,value) : $.getAttr(elem,key)
+        })
     },
     /**
      *设置元素的width，没有参数且选择器选择元素唯一时候返回元素的width
@@ -147,6 +165,42 @@ $.prototype={
         }else if(!params && this.length===1){
             return this.getStyle(this[0],'width')
         }
+    },
+    /**
+     * 入栈操作，栈的最上方的最先出来,返回一个新的jq对象，保存前一个
+     * $('#app').pushStack(document.querySelector('li')).css({background:'red'})
+     * 那么此时只是li颜色变化
+     * 使用end()方法，回到前一个jq对象
+     */
+    pushStack: function( elems ) {
+		var ret = $.merge( this.constructor(), elems );
+		ret.prevObject = this;
+		return ret;
+    },
+    /**
+     * 返回前一个jq对象，现在栈的底下一个栈
+     */
+    end: function() {
+        if(this.prevObject){
+            return this.prevObject
+        }else{
+            return this;
+        }
+    },
+    /**
+     * 循环jq对象自身，对每个匹配到的元素做操作
+     */
+    map: function( callback ) {
+		return this.pushStack( $.map( this, function( elem, i ) {
+			return callback.call( elem, i, elem );
+		} ) );
+    },
+    ready: function(event){
+        var domReady = new Defferd()
+        domReady.push(event)
+        document.addEventListener('DOMContentLoaded', function() {
+            domReady.done()
+        })
     }
 
 }
@@ -227,4 +281,95 @@ $.extend({
         return ret;
     }
 })
+$.extend({
+    merge: function( first, second ) {
+		var len = +second.length,
+			j = 0,
+			i = first.length;
+
+		for ( ; j < len; j++ ) {
+			first[ i++ ] = second[ j ];
+		}
+
+		first.length = i;
+
+		return first;
+	},
+})
+
+$.extend({
+    access: function( elems, key,value ,fn) {
+        //console.log(key)
+        var i = 0;
+        var length = elems.length;
+        /**
+         * key是对象
+         * {
+         *   width:200px;
+         *   background:'red'
+         * }
+         */
+		if($.prototype.isObject(key)){
+            for (var k in key){
+                console.log(k,key[k])
+                $.access(elems,k,key[k],fn)
+            }
+            return elems;
+        }
+        /**
+         * key ,value都存在，给每个元素执行方法，比如css每个元素绑定样式
+         */
+        if(value){
+            for(;i<length;i++){
+                fn(elems[i],key,value)
+            }
+            return elems
+        }
+        /**
+         * value不存在就是获取，比如获取样式
+         */
+        return length > 0?fn(elems[0],key) : undefined;
+	},
+})
+$.extend({
+    //获取样式
+    getStyle:function (element, property){
+        var proValue = null;
+        if (!document.defaultView) {
+            proValue = element.currentStyle[property];
+        } else {
+            proValue = document.defaultView.getComputedStyle(element)[property];
+        }
+        return proValue;
+    },
+    //设置样式
+    setStyle: function (ele,key,value) {
+        ele.style[key] = value;
+    },
+    //获取自定义属性
+    getAttr: function (element, property) {
+        return element.getAttribute(property); //获取
+    },
+    //设置自定义属性
+    setAttr: function (ele,key,value) {
+        ele.setAttribute(key,value)
+    }
+    
+})
+/**
+ * 延迟对象
+ * push是在对象放入方法
+ * done是执行该对象队列中所有的方法
+ */
+function Defferd(){
+    this.events = []
+    this.push = function(event){
+        this.events.push(event)
+    }
+    this.done = function(){
+        for(var i = 0; i < this.events.length; i++){
+            this.events[i]()
+        }
+    }
+}
 
