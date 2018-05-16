@@ -373,3 +373,45 @@ function Defferd(){
     }
 }
 
+/**
+ * 回调对象实现
+ * list保存回调函数
+ * fire执行回调函数
+ */
+$.extend({
+    Callbacks:function ( options ) {
+        var options = options;
+        var list = []//保存fn的数组
+        var queue = []//保存参数和函数调用参数的数组
+        /*函数的调用 */
+        var fire = function (){
+            var fn = null;
+            while ( fn = list.shift() ){
+                fn.apply(queue[0],queue[1])
+            }
+        }
+        self = {
+            /*回调函数增加保存到list数组 */
+            add: function () {
+                (function add(args) {
+                    for(var i = 0; i < args.length; i++ ){
+                        list.push(args[i])
+                    }
+                }) ( arguments )
+            },
+            /*提取函数调用的作用域（this），以及函数的参数，并且调用fire */
+            fireWith: function (context,args) {
+                args = args || [];
+                queue = []
+                queue = [ context, args.slice ? args.slice() : args ];
+                fire()
+            },
+            //默认的函数执行，this指向的是self
+            fire: function () {
+                self.fireWith( this, arguments );
+                return this;
+            }
+        }
+        return self;
+    }
+})
