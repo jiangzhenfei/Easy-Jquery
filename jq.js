@@ -379,39 +379,44 @@ function Defferd(){
  * fire执行回调函数
  */
 $.extend({
-    Callbacks:function ( options ) {
-        var options = options;
-        var list = []//保存fn的数组
-        var queue = []//保存参数和函数调用参数的数组
-        /*函数的调用 */
-        var fire = function (){
-            var fn = null;
-            while ( fn = list.shift() ){
-                fn.apply(queue[0],queue[1])
-            }
-        }
-        self = {
-            /*回调函数增加保存到list数组 */
-            add: function () {
-                (function add(args) {
-                    for(var i = 0; i < args.length; i++ ){
-                        list.push(args[i])
-                    }
-                }) ( arguments )
-            },
-            /*提取函数调用的作用域（this），以及函数的参数，并且调用fire */
-            fireWith: function (context,args) {
-                args = args || [];
-                queue = []
-                queue = [ context, args.slice ? args.slice() : args ];
-                fire()
-            },
-            //默认的函数执行，this指向的是self
-            fire: function () {
-                self.fireWith( this, arguments );
+    Callback: function () {
+        var list = []
+        var self = {
+            add: function ( fn ) {
+                if( Object.prototype.toString.call( fn )==='[object Function]' ){
+                    list.push( fn )
+                }
+                console.log(this)
                 return this;
+            },
+            fire: function ( args ){
+                list.forEach( function ( fn ) {
+                    fn( args )
+                } )
             }
         }
         return self;
+    }
+})
+
+/**
+ * 延迟对象
+ * var d = $.Defferd()
+ * d.done(function(e){}).fail(function(e){})
+ * d.resolve('haha')
+ */
+$.extend({
+    Defferd: function () {
+        var tuples = [
+            ['resolve','done',Callback()],
+            ['reject','fail',Callback()]
+        ]
+        var defferd = {}
+        tuples.forEach( function ( tuple ) {
+            var list = tuple[2]
+            defferd[tuple[1]] = list.add
+            defferd[tuple[0]] = list.fire
+        } )
+        return defferd;
     }
 })
