@@ -361,17 +361,17 @@ $.extend({
  * push是在对象放入方法
  * done是执行该对象队列中所有的方法
  */
-function Defferd(){
-    this.events = []
-    this.push = function(event){
-        this.events.push(event)
-    }
-    this.done = function(){
-        for(var i = 0; i < this.events.length; i++){
-            this.events[i]()
-        }
-    }
-}
+// function Defferd(){
+//     this.events = []
+//     this.push = function(event){
+//         this.events.push(event)
+//     }
+//     this.done = function(){
+//         for(var i = 0; i < this.events.length; i++){
+//             this.events[i]()
+//         }
+//     }
+// }
 
 /**
  * 回调对象实现 -- 在很多时候需要控制一系列的函数顺序执行。那么一般就需要一个队列函数来处理这个问题
