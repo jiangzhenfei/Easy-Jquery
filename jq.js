@@ -377,6 +377,7 @@ $.extend({
  * 回调对象实现 -- 在很多时候需要控制一系列的函数顺序执行。那么一般就需要一个队列函数来处理这个问题
  * list保存回调函数
  * fire执行回调函数
+ * 与正真的jq callback差距很大，包括可以停止，可以清除等等
  */
 $.extend({
     Callback: function () {
@@ -404,6 +405,7 @@ $.extend({
  * var d = $.Defferd()
  * d.done(function(e){}).fail(function(e){})
  * d.resolve('haha')
+ * 
  */
 $.extend({
     Defferd: function () {
