@@ -32,6 +32,7 @@ $.prototype={
         
         var _ele = ele[0]
         var nodes=[]
+        //这里在jq内部是sizzle，我们为了方便理解，后续会用document.querySelectorAll来实现
         for (var i in parentNodes){
             switch(_ele.charAt(0)){
                 case "#":
