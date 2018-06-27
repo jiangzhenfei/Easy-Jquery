@@ -91,7 +91,7 @@ $.prototype={
         return Object.prototype.toString.call(value)==='[object Function]';
     },
     /**
-     * 
+     * 最核心的方法，可以在原型上扩展其他方法，jq的·插件就是靠他扩展的
      * @param {*} obj1 
      * @param {*} obj2 
      * 两个参数则是将后一个对象合并到前一个
