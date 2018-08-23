@@ -381,12 +381,20 @@ $.extend({
  * 与正真的jq callback差距很大，包括可以停止，可以清除等等
  */
 $.extend({
-    Callback: function () {
+    Callback: function (option) {
+        option = option || {}
         var list = []
         var self = {
             add: function ( fn ) {
                 if( Object.prototype.toString.call( fn )==='[object Function]' ){
-                    list.push( fn )
+                    /*
+                        不存在unique，直接push
+                        存在unique，看后面是否成立
+                    */
+                    if( !option.unique || !list.includes(fn)){
+                        list.push( fn )
+                    }
+                    
                 }
                 console.log(this)
                 return this;
@@ -421,5 +429,11 @@ $.extend({
             defferd[tuple[0]] = list.fire
         } )
         return defferd;
+    }
+})
+
+$.extend({
+    error: function ( msg ) {
+       throw new Error( msg )
     }
 })
