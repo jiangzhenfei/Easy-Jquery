@@ -437,3 +437,73 @@ $.extend({
        throw new Error( msg )
     }
 })
+
+/**
+ * 数据缓存
+ */
+function  Data(){
+    this.cache = {}//存储数据的地方
+    this.expando = 'JQuery'+ Math.random()
+}
+
+Data.uid = 1;
+//获取元素对应的key，key是元素跟this.cache的映射
+Data.prototype.key = function( owner ){
+    var unlock = owner[ this.expando ]
+    if( !unlock ){//key不存在则给元素加自定义属性'JQuery'+ Math.random() = ‘key’
+        unlock = Data.uid++
+        owner[ this.expando ] = unlock;
+    }
+    if( !this.cache[ unlock ] ){//在cache中的key不存在则分配一个空对象
+        this.cache[ unlock ] = {}
+    }
+    return unlock;//返回对应的key
+}
+/**
+ * 
+ * @param {HTMLEle} owner html元素
+ * @param {string} key    存储的key
+ * @param {string} value  存储的value
+ */
+Data.prototype.set = function( owner,key,value ){
+    var unlock = this.key( owner )
+    var cache = this.cache[ unlock ]
+    if( typeof key === 'string'){
+        cache[ key ] = value
+    }
+}
+/**
+ * 
+ * @param {HTMLEle} owner html元素
+ * @param {string} key 获取的key，可以不存在则返回该元素所有缓存
+ */
+Data.prototype.get = function( owner,key ){
+    var unlock = this.key( owner )
+    var cache = this.cache[ unlock ]
+    if( key ){
+        return cache[ key ]
+    }
+    return cache;
+}
+/**
+ * 
+ * @param {HTMLEle} owner html元素
+ * @param {string} key    设置或者获取的key，跟value一同不存在则返回该元素所有缓存
+ * @param {string} value  设置的value，不存早则就是内部调用get，存在内部调用set
+ */
+Data.prototype.access = function( owner,key,value ){
+    if( value ){
+        return this.set( owner, key, value )
+    }
+    return this.get( owner, key )
+}
+var data_user = new Data()
+//给JQ添加该工具方法
+$.extend({
+    data: data_user.access.bind( data_user )
+})
+$.extend({
+    error: function ( msg ) {
+       throw new Error( msg )
+    }
+})
