@@ -1,4 +1,4 @@
-# Easy-Jquery
+# Easy-Jquery 简易版的jquery
 
 ### 完成的方法：
 
