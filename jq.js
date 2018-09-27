@@ -2,7 +2,6 @@
  * 设置当前激活的tab页顺序
  *
  * @param { selector } 指的是当前的选择器
- * @param { parent } 指的是当前选择器在哪些父元素内,一般不需要填写，是为了递归用的，不填代表是document
  * $(''#app li) 指的就是在id为app的元素内部所有的li集合，返回是数组
  */
 var $ = function(selector){
@@ -11,7 +10,7 @@ var $ = function(selector){
 $.prototype={
     length:0,
     constructor: $,
-    init:function(selector,parent){
+    init:function(selector){
         //不存在selector
         if(!selector){
             return this;
@@ -21,74 +20,23 @@ $.prototype={
             this.ready(selector)
             return;
         }
-        //原生元素处理
-        if( selector.nodeType ){
-            this[ 0 ] = selector;
-			this.length = 1;
-			return this;
+        let doms = document.querySelectorAll( selector )
+        let i = doms.length > 0 ? 0 : doms.length - 1;
+        while( i-- ){
+            this[ i ] = doms[ i ]
         }
-        var parentNodes = parent || [document];
-        var ele = selector.split(" ")
-        
-        var _ele = ele[0]
-        var nodes=[]
-        //这里在jq内部是sizzle，我们为了方便理解，后续会用document.querySelectorAll来实现
-        for (var i in parentNodes){
-            switch(_ele.charAt(0)){
-                case "#":
-                    name = ele[0].replace(/^#/,"");
-                    nodes.push(parentNodes[i].getElementById(name))
-                    break;
-                case '.':
-                    name = ele[0].replace(/^\./,"");
-                    var Iterator = document.createNodeIterator(parentNodes[i],NodeFilter.SHOW_ELEMENT,
-                        function(node){
-                            return new RegExp("^"+name+"$").test(node.className)?NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
-                        },false);
-                    var currentNode;
-                    while(currentNode = Iterator.nextNode()){
-                        nodes.push(currentNode);
-                    }
-                    break;
-                default:
-                    var Iterator = document.createNodeIterator(parentNodes[i],NodeFilter.SHOW_ELEMENT,
-                    function(node){
-                        return node.tagName.toLocaleLowerCase()===_ele?NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
-                    },false);
-                    var currentNode;
-                    while(currentNode = Iterator.nextNode()){
-                        nodes.push(currentNode);
-                    }
-                    break;
-            }
-        }
-        if(ele.length<=1){
-            for(var i in nodes){
-                this[i] = nodes[i]
-            }
-            this.length = nodes.length || 0;
-            return this;
-        }else{
-            /**
-             * 找到第一层父元素，
-             * ele.splice(0,1) 剔除第一层筛选过的选择器，因为第一层父元素已经找到，
-             * 接着递归调用，直到最后一个选择器内容
-            */
-            ele.splice(0,1)
-            var _newEle = ele.join(" ")
-            return this.init(_newEle,nodes)//在当前父元素下递归寻找下一层元素
-        }   
+        return this;
     },
-    /*判断是否为对象 */
+    /*判断是否为对象 (简单对象)*/
     isObject:function (value){
-        return Object.prototype.toString.call(value)==='[object Object]'; 
+        return Object.getPrototypeOf( value ) === Object.prototype
     },
     /*判断是否为数组 */
     isArray:function (value){
-        return Object.prototype.toString.call(value)==='[object Array]'; 
+        return Array.isArray( value )
     },
     isFunction(value){
-        return Object.prototype.toString.call(value)==='[object Function]';
+        return typeof value === 'function'
     },
     /**
      * 最核心的方法，可以在原型上扩展其他方法，jq的·插件就是靠他扩展的
