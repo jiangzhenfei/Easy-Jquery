@@ -21,7 +21,7 @@ $.prototype={
             return;
         }
         let doms = document.querySelectorAll( selector )
-        let i = doms.length > 0 ? 0 : doms.length - 1;
+        let i = doms.length;
         while( i-- ){
             this[ i ] = doms[ i ]
         }
